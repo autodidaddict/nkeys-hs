@@ -24,7 +24,7 @@
 --
 -- Create a key pair from an existing seed:
 --
--- >>> Just alice = createFromSeed (seed bob)
+-- >>> Just alice = createFromSeed $ seed bob
 -- >>> alice
 -- UBXEJQE5OZ2Y7YAWGLRQQDTFFUVUQMRZG6W4BU3FW2XDNYBXMH72OR45
 -- 

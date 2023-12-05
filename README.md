@@ -1,0 +1,2 @@
+# Nkeys for NATS
+This library provides an encoding and decoding layer on top of standard ed25519 keys. This codec is widely used throughout the NATS ecosystem and produces keys that are double-clickable and URL-safe.
