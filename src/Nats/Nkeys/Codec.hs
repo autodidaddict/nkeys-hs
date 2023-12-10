@@ -65,9 +65,24 @@ encodeSeed publicPrefix input =
 decode :: ByteString -> Either Text ByteString
 decode input =
   let decoded = decodeBase32Unpadded input
-      crc = (unpack . takeEnd 2 <$> decoded)
+      crc = extractCrc <$> decoded
+      crcValid = case (decoded, crc) of
+        (Left _, _) -> False
+        (_, Left _) -> False
+        (Right d, Right c) -> validate d c
+
+      --expectedCrc = computeCRC16 <$> decoded
+      
       trimmed = dropEnd 2 <$> decoded
    in trimmed
+
+extractCrc :: ByteString -> Word16 
+extractCrc input =
+  let Just (i1, b1) = B.unsnoc input
+      Just (_, b2) = B.unsnoc i1
+  in
+     fromIntegral b1 `shiftL` 8 + fromIntegral b2    
+    
 
 extractSeedPrefix :: ByteString -> KeyPrefix
 extractSeedPrefix input =
@@ -95,7 +110,13 @@ appendBytes bytes input =
     B.append input suffix
 
 appendCrc :: ByteString -> ByteString
-appendCrc raw = appendBytes (encodeWord16 $ computeCRC16 raw) raw
+appendCrc raw = 
+  let crc = computeCRC16 raw      
+  in B.append raw $ B.pack $ encodeWord16 crc
+
 
 encodeWord16 :: Word16 -> [Word8]
-encodeWord16 x = Prelude.map fromIntegral [x .&. 0xFF, (x .&. 0xFF00) `shiftR` 8]
+encodeWord16 x =
+  let right_byte = x .&. 0xFF
+      left_byte = ( x `shiftR` 8 ) .&. 0xFF
+  in Prelude.map fromIntegral [right_byte, left_byte]

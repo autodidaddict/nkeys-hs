@@ -1,13 +1,16 @@
 module Nats.Nkeys.Crc where
 
-import Data.Bits (complement, shiftR, xor, (.&.))
+import Data.Bits (complement, shiftR, shiftL, xor, (.&.))
 import Data.Char (ord)
 import Data.Word (Word16, Word8)
 import Data.ByteString
+import qualified Data.Vector.Unboxed as V
 
 -- CRC-16 lookup table (CCITT XMODEM)
 crcTable :: [Word16]
 crcTable =
+-- crcTable :: V.Vector Word16
+-- crcTable = V.fromList
   [ 0x0000,
     0x1021,
     0x2042,
@@ -268,12 +271,18 @@ crcTable =
 
 -- Calculate CRC-16 of a string
 computeCRC16 :: ByteString -> Word16
-computeCRC16 str = complement $ Data.ByteString.foldl crcUpdate 0xffff str
+computeCRC16 str = complement $ Data.ByteString.foldl' crcUpdate 0xffff str
+
 
 validate :: ByteString -> Word16 -> Bool
 validate input expected =
   computeCRC16 input == expected
   
 -- Update CRC-16 value
+-- from the go code:
+-- crc = ((crc << 8) & 0xffff) ^ crc16tab[((crc>>8)^uint16(b))&0x00FF]
 crcUpdate :: Word16 -> Word8 -> Word16
-crcUpdate crc ch = (crc `shiftR` 8) `xor` crcTable !! fromIntegral ((crc `xor` fromIntegral ch) .&. 0xff)
+crcUpdate crc byte =
+    let tableIndex = fromIntegral ((crc `xor` fromIntegral byte) .&. 0xff)
+        crcVal = crcTable !! tableIndex `xor` (crc `shiftR` 8)
+    in crcVal
