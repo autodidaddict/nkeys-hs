@@ -111,7 +111,7 @@ appendBytes bytes input =
 
 appendCrc :: ByteString -> ByteString
 appendCrc raw = 
-  let crc = computeCRC16 raw      
+  let crc = crc16 raw      
   in B.append raw $ B.pack $ encodeWord16 crc
 
 

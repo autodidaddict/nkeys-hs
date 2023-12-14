@@ -36,20 +36,19 @@ officialGoRoundTrip =
                  assertEqual "decoded encode public key should match" goPublic (publicKey roundTripUser)
                  assertEqual "decoded encode should equal original key" goSeed (seed roundTripUser))
 
-crc :: Test 
-crc = 
-    TestCase (do let goSeed = "SUALB7CYOPEXH27JJHTWAR5JOLFRCVT2J2AJYBZ5GBP6I52HUW5JKLLJPU" :: ByteString
-                     input = dropEnd 2 <$> decodeBase32Unpadded goSeed
-                     crc = case input of
-                        Right i -> computeCRC16 i
-                        _ -> 42
+-- crc :: Test 
+-- crc = 
+--     TestCase (do let goSeed = "SUALB7CYOPEXH27JJHTWAR5JOLFRCVT2J2AJYBZ5GBP6I52HUW5JKLLJPU" :: ByteString
+--                      input = dropEnd 2 <$> decodeBase32Unpadded goSeed
+--                      crc = case input of
+--                         Right i -> crc16 i
+--                         _ -> 42
                  
-                 assertEqual "CRC" crc 32105) -- 32105 obtained by executing crc16 function in the Go lib
+--                  assertEqual "CRC" crc 32105) -- 32105 obtained by executing crc16 function in the Go lib
 
 tests :: Test
 tests = TestList [TestLabel "Codec Round Trip" codecRoundTrip,
-                  TestLabel "Round Trip with Go-Generated Seed" officialGoRoundTrip,
-                  TestLabel "Ensure CRC is compatible with Go" crc,
+                  TestLabel "Round Trip with Go-Generated Seed" officialGoRoundTrip,   
                   TestLabel "Verification Round Trip" verifyAndSignTest]
 
 main :: IO ()

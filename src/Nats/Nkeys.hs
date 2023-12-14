@@ -38,12 +38,9 @@
 module Nats.Nkeys (
     module Nats.Nkeys.Pairs,
     module Nats.Nkeys.Codec,
-    module Crypto.Sign.Ed25519,
-    module Nats.Nkeys.Crc
+    module Crypto.Sign.Ed25519    
 ) where
 
 import Nats.Nkeys.Pairs (KeyPair, create, publicKey, seed, createFromSeed, sign, verify)
 import Nats.Nkeys.Codec (KeyPrefix(..))
 import Crypto.Sign.Ed25519 (Signature)
-
-import Nats.Nkeys.Crc -- TODO: remove this once test passes
