@@ -17,8 +17,11 @@ codecRoundTrip :: Test
 codecRoundTrip =
     TestCase (do bob <- create User
                  let bobSeed = seed bob
-                 let Just roundTripUser = createFromSeed bobSeed
-                 assertEqual "decoded encode should equal original key" bobSeed (seed roundTripUser))
+                 case createFromSeed bobSeed of
+                    Just roundTripUser -> 
+                        assertEqual "decoded encode should equal original key" bobSeed (seed roundTripUser)
+                    Nothing ->
+                        assertBool "failed round trip of generated pair" False)
 
 verifyAndSignTest :: Test
 verifyAndSignTest =
@@ -36,6 +39,15 @@ officialGoRoundTrip =
                  assertEqual "decoded encode public key should match" goPublic (publicKey roundTripUser)
                  assertEqual "decoded encode should equal original key" goSeed (seed roundTripUser))
 
+rejectBadCrc :: Test
+rejectBadCrc = 
+    -- note the last character of the go seed has been tampered with
+    TestCase (do let goSeed = "SUALB7CYOPEXH27JJHTWAR5JOLFRCVT2J2AJYBZ5GBP6I52HUW5JKLLJPA"
+                 let m = createFromSeed goSeed
+                 assertEqual "should not be able to create seed with bad CRC" m Nothing)
+
+-- commented out because I don't want the crc function exposed in the public API
+
 -- crc :: Test 
 -- crc = 
 --     TestCase (do let goSeed = "SUALB7CYOPEXH27JJHTWAR5JOLFRCVT2J2AJYBZ5GBP6I52HUW5JKLLJPU" :: ByteString
@@ -48,7 +60,9 @@ officialGoRoundTrip =
 
 tests :: Test
 tests = TestList [TestLabel "Codec Round Trip" codecRoundTrip,
-                  TestLabel "Round Trip with Go-Generated Seed" officialGoRoundTrip,   
+                  TestLabel "Round Trip with Go-Generated Seed" officialGoRoundTrip,
+--                  TestLabel "Verify CRC matches Go CRC" crc,
+                  TestLabel "Cannot create a pair with a bad CRC" rejectBadCrc,
                   TestLabel "Verification Round Trip" verifyAndSignTest]
 
 main :: IO ()

@@ -1,9 +1,12 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Nats.Nkeys.Codec (KeyPrefix (..), Nats.Nkeys.Codec.encode, encodeSeed, fromByte, toByte, decode, extractSeedPrefix) where
+module Nats.Nkeys.Codec (KeyPrefix (..), Nats.Nkeys.Codec.encode, encodeSeed, fromByte, toByte, decode, extractSeedPrefix, extractCrc) where
 
 import Data.Binary (encode, putWord8)
 import Data.Bits
+import Debug.Trace (trace)
+import Text.Printf (printf)
 import Data.ByteString as B
 import Data.ByteString.Base32 (decodeBase32, decodeBase32Unpadded, encodeBase32Unpadded)
 import Data.Data
@@ -65,24 +68,27 @@ encodeSeed publicPrefix input =
 decode :: ByteString -> Either Text ByteString
 decode input =
   let decoded = decodeBase32Unpadded input
-      crc = extractCrc <$> decoded
-      crcValid = case (decoded, crc) of
+      trimmed = dropEnd 2 <$> decoded
+      crc = crc16 <$> trimmed
+      expectedCrc = extractCrc <$> decoded       
+      crcValid = case (expectedCrc, crc) of
         (Left _, _) -> False
         (_, Left _) -> False
-        (Right d, Right c) -> validate d c
-
-      --expectedCrc = computeCRC16 <$> decoded
-      
-      trimmed = dropEnd 2 <$> decoded
-   in trimmed
-
-extractCrc :: ByteString -> Word16 
-extractCrc input =
-  let Just (i1, b1) = B.unsnoc input
-      Just (_, b2) = B.unsnoc i1
+        (Right d, Right c) -> d == c  
   in
-     fromIntegral b1 `shiftL` 8 + fromIntegral b2    
-    
+    if crcValid then
+      trimmed
+    else
+      Left ("Invalid CRC " :: Text)
+
+extractCrc :: ByteString -> Word16
+extractCrc input =
+  let input' = B.takeEnd 2 input
+  in
+  case B.unpack input' of
+    [a,b] -> word16FromBytes (a, b)
+    _ ->
+      0
 
 extractSeedPrefix :: ByteString -> KeyPrefix
 extractSeedPrefix input =
@@ -120,3 +126,10 @@ encodeWord16 x =
   let right_byte = x .&. 0xFF
       left_byte = ( x `shiftR` 8 ) .&. 0xFF
   in Prelude.map fromIntegral [right_byte, left_byte]
+
+word16FromBytes :: (Word8, Word8) -> Word16 
+word16FromBytes (a, b) =
+  let a' = fromIntegral a
+      b' = shift (fromIntegral b) 8
+  in
+    a' .|. b'
