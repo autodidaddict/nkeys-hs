@@ -92,8 +92,7 @@ extractCrc input =
 
 extractSeedPrefix :: ByteString -> KeyPrefix
 extractSeedPrefix input =
-  let r0 = B.head input
-      r1 = B.index input 1
+  let [r0, r1] = B.unpack $ B.take 2 input 
       b0 = r0 .&. 248
       b1 = ((r0 .&. 7) `shiftL` 5) .|. ((r1 .&. 248) `shiftR` 3)
       pb0 = fromByte b0
@@ -105,21 +104,15 @@ extractSeedPrefix input =
 
 prefixBytes :: [Word8] -> ByteString -> ByteString
 prefixBytes bytes input =
-  let prepend = B.pack bytes
-  in
-    B.append prepend input
-
+  B.pack bytes <> input
+  
 appendBytes :: [Word8] -> ByteString -> ByteString
 appendBytes bytes input =
-  let suffix = B.pack bytes
-  in
-    B.append input suffix
-
+  input <> B.pack bytes
+  
 appendCrc :: ByteString -> ByteString
 appendCrc raw = 
-  let crc = crc16 raw      
-  in B.append raw $ B.pack $ encodeWord16 crc
-
+  raw <> B.pack (encodeWord16 $ crc16 raw)
 
 encodeWord16 :: Word16 -> [Word8]
 encodeWord16 x =
