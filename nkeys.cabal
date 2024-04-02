@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               nkeys
-version:            0.0.1.0
+version:            0.0.1.1
 synopsis:           Nkeys ed25519 encoding for use with NATS
 
 description: This library exposes a custom encoding and decoding mechanism for ed25519 keys. This codec produces keys that are both URL safe and double-clickable 
@@ -59,7 +59,7 @@ test-suite nkeys-test
     build-depends:    base == 4.19.0.0,
                       HUnit ^>=1.6,
                       base32 >= 0.4 && < 0.5,
-                      text >= 2.1,  
+                      text >= 2.1 && < 2.2,
                       ed25519 >= 0.0.5 && < 0.1,
                       nkeys-lib,
                       bytestring ^>=0.11
